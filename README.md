@@ -1,4 +1,4 @@
-# Spinot Backend
+# Spinot Python Backend
 
 ## Pre-requisites
 
