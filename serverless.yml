@@ -1,0 +1,86 @@
+service: spinot-backend
+provider:
+  name: aws
+  runtime: python3.11
+  stage: prod
+  region: ${self:custom.region}
+  iam:
+    role:
+      statements:
+#        - Effect: Allow
+#          Action:
+#            - "s3:GetObject"
+#            - "s3:PutObject"
+#            - "s3:DeleteObject"
+#          Resource:
+#            - "arn:aws:s3:::pixie-images/*"
+#            - "arn:aws:s3:::pixie-images-us/*"
+        # - Effect: Allow
+        #   Action:
+        #     - "dynamodb:PutItem"
+        #     - "dynamodb:GetItem"
+        #     - "dynamodb:UpdateItem"
+        #     - "dynamodb:DeleteItem"
+        #     - "dynamodb:Scan"
+        #     - "dynamodb:BatchWriteItem"
+        #   Resource:
+        #     - "arn:aws:dynamodb:${self:custom.region}:971150201377:table/infty-user-table"
+# resources:
+#   Resources:
+#     Connection2Chat:
+#       Type: 'AWS::DynamoDB::Table'
+#       Properties:
+#         TableName: onthefly-connection-table
+#         AttributeDefinitions:
+#           -
+#             AttributeName: id
+#             AttributeType: S
+#         KeySchema:
+#           -
+#             AttributeName: id
+#             KeyType: HASH
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 5
+#           WriteCapacityUnits: 5
+    # inBucketUS:
+    #   Type: AWS::S3::Bucket
+    #   Properties:
+    #     BucketName: images-us
+
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+
+custom:
+  region: ${env:REGION, 'ap-northeast-2'}
+  wsgi:
+    app: app.app
+    packRequirements: false
+  pythonRequirements:
+    dockerizePip: non-linux
+    slim: true
+
+package:
+  exclude:
+    - node_modules/**
+    - venv/**
+    - .git/**
+    - .gitignore
+    - .pre-commit-config.yaml
+    - .vscode/**
+    - .pytest_cache/**
+    - .serverless/**
+    - .serverlessrc
+    - .serverlessignore
+    - __pycache__/**
+
+functions:
+  app:
+    handler: app.main.handler
+    environment:
+      INFTY_REGION: ${self:custom.region}
+    events:
+      - http: ANY /
+      - http: 'ANY /{proxy+}'
+    timeout: 30

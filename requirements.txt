@@ -1,0 +1,15 @@
+python-dotenv
+boto3
+fastapi
+mangum
+botocore
+pytz
+PyJWT
+supabase==2.3.3
+langgraph
+langsmith
+langchain_openai
+langchain-core
+langchain
+langchainhub
+pre-commit
