@@ -7,23 +7,20 @@ from fastapi import Request
 from fastapi import Response
 from mangum import Mangum
 
-from app.apis import ai_api_client
 from app.routers import agent
-from app.routers import process
 
 app = FastAPI(
-    title="OnTheFly API",
-    description="OnTheFly API helps you to secure your LLM application from data breaches.",
+    title="Spinot API",
+    description="API for Spinot",
     version="0.0.1",
     docs_url="/api/v1/docs",
     contact={
-        "name": "OnTheFly",
-        "url": "https://onthe-fly.ai",
-        "email": "gnu@ontheflyai.io",
+        "name": "Spinot",
+        "url": "https://spinot.ai",
+        "email": "gnu@spinot.ai",
     },
 )
 app.include_router(agent.router, prefix="/api/v1")
-app.include_router(process.router, prefix="/api/v1")
 
 
 @app.get(
@@ -37,8 +34,7 @@ app.include_router(process.router, prefix="/api/v1")
             "content": {
                 "application/json": {
                     "example": {
-                        "backend_server_status": "up",
-                        "ai_server_status": "up",
+                        "status": "up",
                     }
                 }
             },
@@ -46,18 +42,7 @@ app.include_router(process.router, prefix="/api/v1")
     },
 )
 async def health_check() -> dict:
-    ai_server_response = ai_api_client.health_check()
-
-    if ai_server_response.get("ai_server_status") != "up":
-        return {
-            "backend_server_status": "up",
-            "ai_server_status": "down",
-        }
-
-    return {
-        "backend_server_status": "up",
-        "ai_server_status": "up",
-    }
+    return {"status": "up"}
 
 
 @app.middleware("http")
