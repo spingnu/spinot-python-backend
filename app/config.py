@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file into os.environ
-load_dotenv(verbose=True)
+load_dotenv(verbose=True, override=True)
 
 
 # Define a Config class to access the environment variables

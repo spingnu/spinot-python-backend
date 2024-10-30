@@ -8,6 +8,7 @@ from fastapi import Response
 from mangum import Mangum
 
 from app.routers import agent
+from app.routers import source
 
 app = FastAPI(
     title="Spinot API",
@@ -21,6 +22,7 @@ app = FastAPI(
     },
 )
 app.include_router(agent.router, prefix="/api/v1")
+app.include_router(source.router, prefix="/api/v1")
 
 
 @app.get(
