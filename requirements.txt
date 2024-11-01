@@ -7,3 +7,6 @@ pytz
 PyJWT
 supabase
 pre-commit
+requests
+openai
+tenacity
