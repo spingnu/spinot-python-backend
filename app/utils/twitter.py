@@ -13,7 +13,7 @@ def fetch_twitter_user_home_timelines(access_token: str, account_id: str):
 
         result = []
         for home_timeline in home_timelines:
-            result.append({"id": home_timeline.id, "text": home_timeline.text})
+            result.append({"tweet_id": home_timeline.id, "text": home_timeline.text})
     except Exception as e:
         logging.error(f"Fail to get timeline data from user_id={account_id}. error={e}")
         return []

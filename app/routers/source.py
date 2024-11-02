@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from app.db.source import get_coindesk_news
 from app.db.source import update_coindesk_db
 from app.db.twitter import get_twitter_all_users_oauth_info
+from app.db.twitter import write_twitter_timelines
 from app.utils import get_response
 from app.utils.twitter import fetch_twitter_home_timelines
 
@@ -36,6 +37,7 @@ async def coindesk():
 async def twitter_home_timelines():
     twitter_users = get_twitter_all_users_oauth_info()
     users_home_timelines = fetch_twitter_home_timelines(twitter_users)
+    write_twitter_timelines(users_home_timelines)
 
     data = {"home_timelines": json.dumps(users_home_timelines)}
 
