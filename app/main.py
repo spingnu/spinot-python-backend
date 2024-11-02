@@ -8,6 +8,8 @@ from fastapi import Response
 from mangum import Mangum
 
 from app.routers import agent
+from app.routers import ai
+from app.routers import report
 from app.routers import source
 
 app = FastAPI(
@@ -23,6 +25,8 @@ app = FastAPI(
 )
 app.include_router(agent.router, prefix="/api/v1")
 app.include_router(source.router, prefix="/api/v1")
+app.include_router(ai.router, prefix="/api/v1")
+app.include_router(report.router, prefix="/api/v1")
 
 
 @app.get(
