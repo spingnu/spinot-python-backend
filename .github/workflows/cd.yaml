@@ -1,0 +1,50 @@
+name: Serverless Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - name: Install Serverless Framework
+      run: npm install -g serverless
+
+    - name: Install dependencies
+      run: npm install
+
+    - name:  Set Environment Variables - ap-northeast-2
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set default.region ap-northeast-2
+        echo "REGION=ap-northeast-2" >> $GITHUB_ENV
+
+
+    - name: Deploy Asia Region
+      run: sls deploy
+
+    # - name: Set Environment Variables - us-west-2
+    #   run: |
+    #     aws configure set default.region us-west-2
+    #     echo "REGION=us-west-2" >> $GITHUB_ENV
+
+
+    # - name: Deploy US Region
+    #   run: sls deploy
