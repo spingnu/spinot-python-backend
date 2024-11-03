@@ -188,7 +188,7 @@ def build_graph():
         else:
             return "generate"
 
-    def grade_generation_v_documents_and_question(state):
+    def grade_answer(state):
         question = state["question"]
         documents = state["documents"]
         generation = state["generation"]
@@ -230,7 +230,7 @@ def build_graph():
 
     builder.add_conditional_edges("rewrite_query", START)
     builder.add_conditional_edges(
-        "generate", grade_generation_v_documents_and_question, {"useful": END, "not useful": "rewrite_query"}
+        "generate", grade_answer, {"useful": END, "not useful": "rewrite_query"}
     )
 
-    return builder.compile()
+    return builder.compile(checkpointer=MemorySaver())
