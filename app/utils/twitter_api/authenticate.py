@@ -17,9 +17,9 @@ def reauthenticate(refresh_token: str):
         "Authorization": f"Basic {encoded_auth_code}",
     }
     request_body = {
-        "client_id": Config.TWITTER_CLIENT_ID,
-        "grant_type": "refresh_token",
         "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+        "client_id": Config.TWITTER_CLIENT_ID,
     }
 
     response = requests.post(
