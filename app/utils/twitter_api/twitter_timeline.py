@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pytwitter import Api
 
-from app.db.twitter import update_user_oauth_info_tokens
+from app.db.user_oauth_info import update_user_oauth_info_tokens
 from app.logger import logger
 from app.utils.twitter_api.authenticate import auth_user
 
