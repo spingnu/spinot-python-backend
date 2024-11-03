@@ -23,3 +23,14 @@ def insert_tweet(tweet_id: str, content: str):
     except Exception as e:
         logger.error(f"fail to insert_tweet (error={e})")
     return False
+
+
+def get_user_timelines(user_id: str):
+    user_timelines = (
+        supabase.from_("tweets_users")
+        .select("id, tweet_id, tweet(id, content)")
+        .eq("user_id", user_id)
+        .execute()
+    ).data
+
+    return user_timelines
