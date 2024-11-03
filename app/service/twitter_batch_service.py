@@ -8,7 +8,7 @@ from app.db.twitter import insert_tweet
 from app.db.twitter import insert_tweets_users
 from app.db.twitter import is_exist_tweet
 from app.db.twitter import is_exist_tweets_users
-from app.utils.twitter import fetch_all_users_timeline_tweets
+from app.utils.twitter_api.twitter_timeline import fetch_all_users_timeline_tweets
 
 
 # update tweets info from `hours_before` ago until now
