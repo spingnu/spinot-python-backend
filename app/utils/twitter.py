@@ -4,7 +4,7 @@ from pytwitter import Api
 
 from app.db.twitter import update_user_oauth_info_tokens
 from app.logger import logger
-from app.utils.twitter_oauth.authenticate import auth_user
+from app.utils.twitter_api.authenticate import auth_user
 
 
 def fetch_all_users_timeline_tweets(twitter_users, start_time):
