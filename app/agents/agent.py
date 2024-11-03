@@ -13,10 +13,6 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 class State(TypedDict):
     question: str
     generation: str
@@ -94,15 +90,15 @@ def create_answer_generator():
 
 def create_query_rewriter():
     llm = ChatOpenAI(model="gpt-4o", temperature=0)
-    system = """You are a question re-writer that converts an input question to a better version that is optimized \n
-        for internal document search. Look at the question and the initially retrieved document, then try to reformulate the query by optionally
-        referencing the key phrases from the documents. """
+    system = """You are a question rewriter that converts an input question to a better version that is optimized \n
+        for internal document search. Look at the question and the optional retrieved documents, then try to reformulate the query by
+        common knowledge or adding the key phrases from the documents if available."""
     re_write_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system),
             (
                 "human",
-                "Here is the question: \n\n {question} \n Formulate an improved question.",
+                "Here is the question: \n\n {question} document: {document} \n\n Formulate an improved question.",
             ),
         ]
     )
@@ -112,7 +108,7 @@ def create_query_rewriter():
 
 def create_hallucination_grader():
     # LLM with function call
-    llm = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o", temperature=0)
     structured_llm_grader = llm.with_structured_output(GradeHallucinations)
 
     # Prompt
@@ -185,23 +181,14 @@ def build_graph():
             return "generate"
 
     def grade_answer(state):
-        question = state["question"]
-        documents = state["documents"]
-        generation = state["generation"]
-
         score = hallucination_grader.invoke(
-            {"documents": documents, "generation": generation}
+            {"documents": state["documents"], "generation": state["generation"]}
         )
-        grade = score.binary_score
-
         # Check hallucination
-        if grade == "yes":
-            score = hallucination_grader.invoke({"question": question, "generation": generation})
-            grade = score.binary_score
-            if grade == "yes":
-                return "useful"
-            else:
-                return "not useful"
+        if score.binary_score == "yes":
+            return "useful"
+        else:
+            return "not useful"
 
     builder = StateGraph(State)
     builder.add_node("coindesk_retrieve", coindesk_retrieve)
