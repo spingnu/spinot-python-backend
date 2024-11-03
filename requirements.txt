@@ -10,3 +10,4 @@ pre-commit
 requests
 openai
 tenacity
+pytwitter
