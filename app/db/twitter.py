@@ -25,10 +25,11 @@ def update_user_oauth_info_tokens(
     return False
 
 
-# update tweets info from 1 hour ago until now
-def update_tweet_db():
-    one_hour_ago = datetime.utcnow() - timedelta(hours=10)
-    start_time = one_hour_ago.strftime("%Y-%m-%dT%H:%M:%SZ")
+# update tweets info from `hours_before` ago until now
+# hours_before default value is 1 (1 hour)
+def update_tweet_db(hours_before: int = 1):
+    update_start_time = datetime.utcnow() - timedelta(hours=hours_before)
+    start_time = update_start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     all_users_twitter_users = get_twitter_all_users_oauth_info()
     # all_users_tweets => user_id: set[tweet_ids...]

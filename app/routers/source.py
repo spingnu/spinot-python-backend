@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.db.source import get_coindesk_news
 from app.db.source import update_coindesk_db
@@ -37,8 +38,12 @@ async def coindesk():
 #     return get_response(200, response)
 
 
+class TimeLineRequest(BaseModel):
+    update_hours_before: int
+
+
 @router.put("/home-timelines")
-async def twitter_home_timelines():
-    update_tweet_db()
+async def twitter_home_timelines(request: TimeLineRequest):
+    update_tweet_db(request.update_hours_before)
 
     return get_response(200)
