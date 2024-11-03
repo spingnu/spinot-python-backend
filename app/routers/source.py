@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import json
-
 from fastapi import APIRouter
 
 from app.db.source import get_coindesk_news
 from app.db.source import update_coindesk_db
-from app.db.twitter import get_twitter_all_users_oauth_info
-from app.db.twitter import write_twitter_timelines
+from app.db.twitter import update_tweet_db
 from app.utils import get_response
-from app.utils.twitter import fetch_twitter_home_timelines
 
 router = APIRouter(
     prefix="/source",
@@ -33,12 +29,16 @@ async def coindesk():
     return get_response(200, data)
 
 
-@router.get("/home-timelines")
+# @router.get("/home-timelines/{user_id}")
+# async def twitter_home_timelines(user_id: str):
+#     tweets = get_user_tweets(user_id)
+#     response = {'data': tweets}
+#
+#     return get_response(200, response)
+
+
+@router.put("/home-timelines")
 async def twitter_home_timelines():
-    twitter_users = get_twitter_all_users_oauth_info()
-    users_home_timelines = fetch_twitter_home_timelines(twitter_users)
-    write_twitter_timelines(users_home_timelines)
+    update_tweet_db()
 
-    data = {"home_timelines": json.dumps(users_home_timelines)}
-
-    return get_response(200, data)
+    return get_response(200)

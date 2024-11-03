@@ -1,11 +1,35 @@
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timedelta
+
 from app.logger import logger
 from app.supabase_client import supabase
 from app.utils.twitter import fetch_all_users_timeline_tweets
 
 
-def update_tweet_db(start_time):
+# update user_oauth_info token info
+def update_user_oauth_info_tokens(
+    id: int, new_access_token: str, new_refresh_token: str
+):
+    try:
+        update_info = {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+        }
+        supabase.table("user_oauth_info").update(update_info).eq("id", id)
+        return True
+    except Exception as e:
+        logger.error(f"Fail to update_user_oauth_info_tokens (error={e})")
+
+    return False
+
+
+# update tweets info from 1 hour ago until now
+def update_tweet_db():
+    one_hour_ago = datetime.utcnow() - timedelta(hours=10)
+    start_time = one_hour_ago.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     all_users_twitter_users = get_twitter_all_users_oauth_info()
     # all_users_tweets => user_id: set[tweet_ids...]
     # tweets_info => tweet_id: content
@@ -40,6 +64,12 @@ def update_tweet_db(start_time):
             supabase.table("tweets_users").insert(
                 {"tweet_id": user_tweet_id, "user_id": user_id}
             )
+
+
+# def get_user_tweets(user_id: str):
+#     supabase.table('tweet')
+#     .select('*')
+#     .j=
 
 
 def get_twitter_all_users_oauth_info():
