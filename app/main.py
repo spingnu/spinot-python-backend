@@ -77,6 +77,7 @@ async def add_cors_headers(request: Request, call_next):
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
+    logger.info(f"Request to {request.url.path} started")
     response = await call_next(request)
     process_time = time.time() - start_time
     logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
