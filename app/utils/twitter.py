@@ -6,6 +6,31 @@ from datetime import datetime
 from pytwitter import Api
 
 
+def fetch_all_users_timeline_tweets(twitter_users, start_time):
+    all_users_tweets = {}  # user_id: set[tweet_ids...]
+    tweets_info = {}  # tweet_id: content
+    for twitter_user in twitter_users:
+        user_id = twitter_user.get("user_id")
+        access_token = twitter_user.get("access_token")
+        provider_account_id = twitter_user.get("provider_account_id")
+
+        api = Api(bearer_token=access_token)
+        response = api.get_timelines_reverse_chronological(
+            user_id=provider_account_id, start_time=start_time
+        )
+        timelines = response.data
+
+        for timeline in timelines:
+            tweet_id = timeline.id
+            text = timeline.text
+
+            tweets_info[tweet_id] = text
+            user_tweets = all_users_tweets.setdefault(user_id, {tweet_id})
+            user_tweets.add(tweet_id)
+
+    return [all_users_tweets, tweets_info]
+
+
 def fetch_twitter_user_home_timelines(
     access_token: str, account_id: str, start_time: str
 ):
