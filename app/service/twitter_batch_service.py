@@ -5,8 +5,8 @@ from datetime import timedelta
 
 from app.db.tweet import insert_tweet
 from app.db.tweet import is_exist_tweet
-from app.db.twitter import insert_tweets_users
-from app.db.twitter import is_exist_tweets_users
+from app.db.tweets_users import insert_tweets_users
+from app.db.tweets_users import is_exist_tweets_users
 from app.db.user_oauth_info import get_twitter_all_users_oauth_info
 from app.utils.twitter_api.twitter_timeline import fetch_all_users_timeline_tweets
 
