@@ -1,21 +1,16 @@
 import os
-from typing import Annotated, List, Literal
+from typing import List, Literal
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain import hub
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.tools.retriever import create_retriever_tool
 from langchain_community.vectorstores import SupabaseVectorStore
-from langchain_core.messages import BaseMessage
 from langchain_core.output_parsers import StrOutputParser
 from supabase.client import Client
 from typing_extensions import TypedDict
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
 from dotenv import load_dotenv
@@ -147,6 +142,7 @@ def build_graph():
     grader = create_grader()
     hallucination_grader = create_hallucination_grader()
 
+    # Nodes
     def coindesk_retrieve(state):
         documents = retriever.invoke(state["question"])
         return {"documents": documents, "question": state["question"]}
@@ -172,7 +168,7 @@ def build_graph():
         better_question = query_rewriter.invoke({"question": state["question"]})
         return {"documents": state["documents"], "question": better_question}
 
-
+    # Edges
     def route_question(state):
         question = state["question"]
         source = router.invoke({"question": question})
@@ -214,20 +210,16 @@ def build_graph():
     builder.add_node("grade_documents", grade_documents)
     builder.add_node("rewrite_query", rewrite_query)
 
-
     builder.add_conditional_edges(START, route_question, {
         "tweets": "tweets_retrieve",
         "media": "coindesk_retrieve",
     })
-
     builder.add_edge("coindesk_retrieve", "grade_documents")
     builder.add_edge("tweets_retrieve", "grade_documents")
-
     builder.add_conditional_edges("grade_documents", decide_to_generate, {
         "rewrite_query": "rewrite_query",
         "generate": "generate",
     })
-
     builder.add_conditional_edges("rewrite_query", START)
     builder.add_conditional_edges(
         "generate", grade_answer, {"useful": END, "not useful": "rewrite_query"}
