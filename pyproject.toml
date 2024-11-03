@@ -2,7 +2,7 @@
 name = "spinot-python-backend"
 version = "0.1.0"
 description = ""
-authors = ["Jinsuk Park <jinsuk@spinot.ai>"]
+authors = ["Jinsuk Park <jinsuk@spinot.ai>", "Gnu Kim <gnu@spinot.ai>"]
 readme = "README.md"
 package-mode = false
 
