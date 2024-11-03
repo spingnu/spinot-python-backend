@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.db.source import get_coindesk_news
 from app.db.source import update_coindesk_db
-from app.db.twitter import update_tweet_db
+from app.service.twitter_batch_service import batch_update_all_user_timelines
 from app.utils import get_response
 
 router = APIRouter(
@@ -44,6 +44,6 @@ class TimeLineRequest(BaseModel):
 
 @router.put("/home-timelines")
 async def twitter_home_timelines(request: TimeLineRequest):
-    update_tweet_db(request.update_hours_before)
+    batch_update_all_user_timelines(request.update_hours_before)
 
     return get_response(200)

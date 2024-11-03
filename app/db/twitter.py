@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
-from datetime import timedelta
-
 from app.logger import logger
 from app.supabase_client import supabase
-from app.utils.twitter import fetch_all_users_timeline_tweets
 
 
 # update user_oauth_info token info
@@ -25,48 +21,6 @@ def update_user_oauth_info_tokens(
     return False
 
 
-# update tweets info from `hours_before` ago until now
-# hours_before default value is 1 (1 hour)
-def update_tweet_db(hours_before: int = 1):
-    update_start_time = datetime.utcnow() - timedelta(hours=hours_before)
-    start_time = update_start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    all_users_twitter_users = get_twitter_all_users_oauth_info()
-    # all_users_tweets => user_id: set[tweet_ids...]
-    # tweets_info => tweet_id: content
-    all_users_tweets, tweets_info = fetch_all_users_timeline_tweets(
-        all_users_twitter_users, start_time
-    )
-    # update all tweets
-    for tweet_id, content in tweets_info.items():
-        is_exist = (
-            supabase.table("tweet")
-            .select("*", count="exact")
-            .eq("tweet_id", tweet_id)
-            .execute()
-        )
-        if is_exist.count > 0:
-            # skip insert duplicated tweets
-            continue
-        supabase.table("tweet").insert({"tweet_id": tweet_id, "content": content})
-
-    # mapping user <-> tweets
-    for user_id, user_tweet_ids in all_users_tweets.items():
-        for user_tweet_id in user_tweet_ids:
-            is_exist_tweet = (
-                supabase.table("tweets_users")
-                .select("*", count="exact")
-                .eq("user_id", user_id)
-                .eq("tweet_id", user_tweet_id)
-                .execute()
-            )
-            if is_exist_tweet.count > 0:
-                continue
-            supabase.table("tweets_users").insert(
-                {"tweet_id": user_tweet_id, "user_id": user_id}
-            )
-
-
 # def get_user_tweets(user_id: str):
 #     supabase.table('tweet')
 #     .select('*')
@@ -76,6 +30,49 @@ def update_tweet_db(hours_before: int = 1):
 def get_twitter_all_users_oauth_info():
     response = supabase.table("user_oauth_info").select("*").execute()
     return response.data
+
+
+def is_exist_tweet(tweet_id: str):
+    is_exist = (
+        supabase.table("tweet")
+        .select("*", count="exact")
+        .eq("tweet_id", tweet_id)
+        .execute()
+    )
+
+    return True if is_exist.count > 0 else False
+
+
+def insert_tweet(tweet_id: str, content: str):
+    insert_data = {"tweet_id": tweet_id, "content": content}
+    try:
+        supabase.table("tweet").insert(insert_data).execute()
+        return True
+    except Exception as e:
+        logger.error(f"fail to insert_tweet (error={e})")
+    return False
+
+
+def is_exist_tweets_users(user_id: str, tweet_id: str):
+    is_exist = (
+        supabase.table("tweets_users")
+        .select("*", count="exact")
+        .eq("user_id", user_id)
+        .eq("tweet_id", tweet_id)
+        .execute()
+    )
+
+    return True if is_exist.count > 0 else False
+
+
+def insert_tweets_users(user_id: str, tweet_id: str):
+    insert_data = {"tweet_id": tweet_id, "user_id": user_id}
+    try:
+        supabase.table("tweets_users").insert(insert_data).execute()
+        return True
+    except Exception as e:
+        logger.error(f"fail to insert_tweets_users (error={e})")
+    return False
 
 
 def write_twitter_timelines(users_home_timelines):
