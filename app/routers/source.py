@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.db.source import get_coindesk_news
 from app.db.source import update_coindesk_db
+from app.db.tweet import get_user_timelines
 from app.service.twitter_batch_service import batch_update_all_user_timelines
 from app.utils import get_response
 
@@ -30,12 +31,12 @@ async def coindesk():
     return get_response(200, data)
 
 
-# @router.get("/home-timelines/{user_id}")
-# async def twitter_home_timelines(user_id: str):
-#     tweets = get_user_tweets(user_id)
-#     response = {'data': tweets}
-#
-#     return get_response(200, response)
+@router.get("/home-timelines")
+async def twitter_home_timelines(user_id: str):
+    tweets = get_user_timelines(user_id)
+    response = {"data": tweets}
+
+    return get_response(200, response)
 
 
 class TimeLineRequest(BaseModel):
