@@ -9,7 +9,7 @@ from app.logger import logger
 
 
 # retrieve user's access_token by refresh_token
-def auth_user(refresh_token: str):
+def reauthenticate(refresh_token: str):
     auth_code = f"{Config.TWITTER_CLIENT_ID}:{Config.TWITTER_CLIENT_SECRET}"
     encoded_auth_code = base64.b64encode(auth_code.encode()).decode()
     headers = {

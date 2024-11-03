@@ -4,7 +4,7 @@ from pytwitter import Api
 
 from app.db.user_oauth_info import update_user_oauth_info_tokens
 from app.logger import logger
-from app.utils.twitter_api.authenticate import auth_user
+from app.utils.twitter_api.authenticate import reauthenticate
 
 
 def fetch_all_users_timeline_tweets(twitter_users, start_time):
@@ -23,7 +23,7 @@ def fetch_all_users_timeline_tweets(twitter_users, start_time):
             )
         except Exception as e:
             logger.warn(f"access_token is expired (error={e})")
-            new_access_token, new_refresh_token = auth_user(refresh_token)
+            new_access_token, new_refresh_token = reauthenticate(refresh_token)
             timelines = fetch_twitter_timelines(
                 provider_account_id, new_access_token, start_time
             )
