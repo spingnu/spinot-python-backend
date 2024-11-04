@@ -30,6 +30,7 @@ async def health():
 
 class ChatRequest(BaseModel):
     message: str
+    user_id: str
 
 
 @router.post("/chat/report/latest")
@@ -51,7 +52,7 @@ async def chat_report_latest(request_body: ChatRequest):
     )
 
     # TODO: Get report by user_id
-    report = get_latest_report("user_id")
+    report = get_latest_report(request_body.user_id)
     if not report:
         logger.error("Failed: report not found.")
         return get_response(500, "report not found for user.")
