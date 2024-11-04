@@ -38,3 +38,15 @@ def get_coindesk_news():
     )
 
     return response.data
+
+
+def get_latest_report(user_id):
+    response = (
+        supabase.table("report")
+        .select("*")
+        .eq("user_id", user_id)
+        .limit(1)
+        .order("date", desc=True)
+        .execute()
+    )
+    return response.data[0] if response.data else None
