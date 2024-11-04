@@ -1,17 +1,33 @@
 from __future__ import annotations
 
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi import Response
 from mangum import Mangum
+from psycopg_pool import AsyncConnectionPool
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from app.logger import logger
 from app.routers import agent
 from app.routers import ai
 from app.routers import report
 from app.routers import source
+from app.config import Config
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db_uri = Config.get_postgres_db_uri()
+    logger.info(f"Connecting to Postgres: {db_uri}")
+    app.async_pool = AsyncConnectionPool(conninfo=db_uri)
+    app.checkpointer = AsyncPostgresSaver(app.async_pool)
+    await app.checkpointer.setup()
+    yield
+    await app.async_pool.close()
+
 
 app = FastAPI(
     title="Spinot API",
@@ -23,6 +39,7 @@ app = FastAPI(
         "url": "https://spinot.ai",
         "email": "gnu@spinot.ai",
     },
+    lifespan=lifespan,
 )
 app.include_router(agent.router, prefix="/api/v1")
 app.include_router(source.router, prefix="/api/v1")

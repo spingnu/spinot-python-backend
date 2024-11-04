@@ -3,16 +3,14 @@ from typing import List, Literal
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain import hub
 from langchain.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_core.output_parsers import StrOutputParser
-from supabase.client import Client
+from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict
 
 from app.supabase_client import supabase
 
-from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
 
 class State(TypedDict):
     question: str
@@ -125,7 +123,7 @@ def create_hallucination_grader():
     return hallucination_grader
 
 
-def build_graph():
+def get_graph_builder():
     coindesk_store = SupabaseVectorStore(client=supabase, embedding=OpenAIEmbeddings(), table_name="coindesk")
     retriever = coindesk_store.as_retriever()
 
@@ -190,13 +188,21 @@ def build_graph():
         else:
             return "not useful"
 
+    def placeholder(state):
+        return state
+
     builder = StateGraph(State)
     builder.add_node("coindesk_retrieve", coindesk_retrieve)
     builder.add_node("tweets_retrieve", tweet_retrieve)
     builder.add_node("generate", generate)
     builder.add_node("grade_documents", grade_documents)
     builder.add_node("rewrite_query", rewrite_query)
+    builder.add_node(placeholder)
 
+    builder.add_conditional_edges(placeholder, route_question, {
+        "tweets": "tweets_retrieve",
+        "media": "coindesk_retrieve",
+    })
     builder.add_conditional_edges(START, route_question, {
         "tweets": "tweets_retrieve",
         "media": "coindesk_retrieve",
@@ -207,9 +213,11 @@ def build_graph():
         "rewrite_query": "rewrite_query",
         "generate": "generate",
     })
-    builder.add_conditional_edges("rewrite_query", START)
+    builder.add_edge("rewrite_query", "")
     builder.add_conditional_edges(
         "generate", grade_answer, {"useful": END, "not useful": "rewrite_query"}
     )
 
-    return builder.compile(checkpointer=MemorySaver())
+    return builder
+
+builder = get_graph_builder()

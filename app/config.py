@@ -15,3 +15,13 @@ class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     TWITTER_CLIENT_ID = os.getenv("TWITTER_CLIENT_ID")
     TWITTER_CLIENT_SECRET = os.getenv("TWITTER_CLIENT_SECRET")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+    POSTGRES_DB = os.getenv("POSTGRES_DB")
+
+    @classmethod
+    def get_postgres_db_uri(cls):
+        return (f"postgresql://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}@"
+                f"{cls.POSTGRES_HOST}:{cls.POSTGRES_PORT}/{cls.POSTGRES_DB}")
