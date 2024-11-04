@@ -7,7 +7,10 @@ from fastapi import Request
 from fastapi import Response
 from mangum import Mangum
 
+from app.logger import logger
 from app.routers import agent
+from app.routers import ai
+from app.routers import report
 from app.routers import source
 
 app = FastAPI(
@@ -23,6 +26,8 @@ app = FastAPI(
 )
 app.include_router(agent.router, prefix="/api/v1")
 app.include_router(source.router, prefix="/api/v1")
+app.include_router(ai.router, prefix="/api/v1")
+app.include_router(report.router, prefix="/api/v1")
 
 
 @app.get(
@@ -72,12 +77,11 @@ async def add_cors_headers(request: Request, call_next):
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
+    logger.info(f"Request to {request.url.path} started")
     response = await call_next(request)
-    print(
-        "Time took to process the request and return response is {} sec".format(
-            time.time() - start_time
-        )
-    )
+    process_time = time.time() - start_time
+    logger.info(f"Request to {request.url.path} took {process_time:.4f} seconds")
+
     return response
 
 

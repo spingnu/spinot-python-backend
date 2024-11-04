@@ -7,3 +7,7 @@ pytz
 PyJWT
 supabase
 pre-commit
+requests
+openai
+tenacity
+python-twitter-v2==0.9.2
