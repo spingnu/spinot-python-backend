@@ -1,4 +1,3 @@
-import os
 from typing import List, Literal
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -9,6 +8,8 @@ from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_core.output_parsers import StrOutputParser
 from supabase.client import Client
 from typing_extensions import TypedDict
+
+from app.supabase_client import supabase
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
@@ -125,11 +126,10 @@ def create_hallucination_grader():
 
 
 def build_graph():
-    client = Client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
-    coindesk_store = SupabaseVectorStore(client=client, embedding=OpenAIEmbeddings(), table_name="coindesk")
+    coindesk_store = SupabaseVectorStore(client=supabase, embedding=OpenAIEmbeddings(), table_name="coindesk")
     retriever = coindesk_store.as_retriever()
 
-    tweet_store = SupabaseVectorStore(client=client, embedding=OpenAIEmbeddings(), table_name="tweets")
+    tweet_store = SupabaseVectorStore(client=supabase, embedding=OpenAIEmbeddings(), table_name="tweets")
     tweet_retriever = tweet_store.as_retriever()
 
     router = create_router()
