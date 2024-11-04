@@ -3,12 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.logger import logger
 from app.utils import get_response
 from app.db.source import get_latest_report
-from app.agents.agent import builder
 
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
@@ -55,7 +55,6 @@ async def chat_report_latest(chat_request: ChatRequest):
         ]
     )
 
-    # TODO: Get report by user_id
     report = get_latest_report(chat_request.user_id)
     if not report:
         logger.error("Failed: report not found.")
@@ -79,7 +78,11 @@ async def chat(request: Request, chat_request: ChatRequest):
     if not thread_id:
         thread_id = str(uuid.uuid4())
 
-    graph = builder.compile(checkpointer=request.app.checkpointer)
     config = {"configurable": {"thread_id": chat_request.thread_id}}
-    res = await graph.ainvoke({"question": message}, config)
-    return get_response(200, res)
+    async def res():
+        async for chunk in request.app.graph.astream({"question": message}, config, stream_mode="updates"):
+            for node, values in chunk.items():
+                if node == "generate":
+                    yield values
+
+    return StreamingResponse(res())

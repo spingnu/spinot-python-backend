@@ -16,6 +16,7 @@ from app.routers import ai
 from app.routers import report
 from app.routers import source
 from app.config import Config
+from app.agents.agent import builder
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Connecting to Postgres: {db_uri}")
     app.async_pool = AsyncConnectionPool(conninfo=db_uri)
     app.checkpointer = AsyncPostgresSaver(app.async_pool)
+    app.graph = builder.compile(app.checkpointer)
     await app.checkpointer.setup()
     yield
     await app.async_pool.close()
