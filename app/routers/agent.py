@@ -62,7 +62,11 @@ async def chat_report(chat_request: ChatReportRequest):
     bot = report_prompt | model | StrOutputParser()
     res = await bot.ainvoke({"question": message, "report": report})
 
-    return get_response(200, res)
+    data = {
+        "response": res,
+    }
+
+    return get_response(200, data)
 
 
 class ChatRequest(BaseModel):
