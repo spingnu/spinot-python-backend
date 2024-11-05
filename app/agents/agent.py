@@ -1,12 +1,19 @@
-from typing import List, Literal
+from __future__ import annotations
 
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from typing import List
+from typing import Literal
+
 from langchain import hub
 from langchain.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
 from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_core.output_parsers import StrOutputParser
-from langgraph.graph import StateGraph, START, END
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import StateGraph
+from pydantic import BaseModel
+from pydantic import Field
 from typing_extensions import TypedDict
 
 from app.supabase_client import supabase
@@ -23,6 +30,7 @@ class GradeDocuments(BaseModel):
         description="Documents are relevant to the question, 'yes' or 'no'"
     )
 
+
 class RouteQuery(BaseModel):
     """Route a user query to the most relevant datasource."""
 
@@ -30,6 +38,7 @@ class RouteQuery(BaseModel):
         ...,
         description="Given a user question choose to route it to twitter search or media(news, articles, blogs) search.",
     )
+
 
 class GradeHallucinations(BaseModel):
     """Binary score for hallucination present in generation answer."""
@@ -49,7 +58,10 @@ def create_grader():
     grade_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system),
-            ("human", "Retrieved document: \n\n {document} \n\n User question: {question}"),
+            (
+                "human",
+                "Retrieved document: \n\n {document} \n\n User question: {question}",
+            ),
         ]
     )
     retrieval_grader = grade_prompt | structured_llm_grader
@@ -116,7 +128,10 @@ def create_hallucination_grader():
     hallucination_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system),
-            ("human", "Set of facts: \n\n {documents} \n\n LLM generation: {generation}"),
+            (
+                "human",
+                "Set of facts: \n\n {documents} \n\n LLM generation: {generation}",
+            ),
         ]
     )
     hallucination_grader = hallucination_prompt | structured_llm_grader
@@ -124,10 +139,14 @@ def create_hallucination_grader():
 
 
 def get_graph_builder():
-    coindesk_store = SupabaseVectorStore(client=supabase, embedding=OpenAIEmbeddings(), table_name="coindesk")
+    coindesk_store = SupabaseVectorStore(
+        client=supabase, embedding=OpenAIEmbeddings(), table_name="coindesk"
+    )
     retriever = coindesk_store.as_retriever()
 
-    tweet_store = SupabaseVectorStore(client=supabase, embedding=OpenAIEmbeddings(), table_name="tweets")
+    tweet_store = SupabaseVectorStore(
+        client=supabase, embedding=OpenAIEmbeddings(), table_name="tweets"
+    )
     tweet_retriever = tweet_store.as_retriever()
 
     router = create_router()
@@ -146,8 +165,14 @@ def get_graph_builder():
         return {"documents": documents, "question": state["question"]}
 
     def generate(state):
-        generation = generator.invoke(({"context": state["documents"], "question": state["question"]}))
-        return {"generation": generation, "documents": state["documents"], "question": state["question"]}
+        generation = generator.invoke(
+            ({"context": state["documents"], "question": state["question"]})
+        )
+        return {
+            "generation": generation,
+            "documents": state["documents"],
+            "question": state["question"],
+        }
 
     def grade_documents(state):
         filtered = []
@@ -199,25 +224,38 @@ def get_graph_builder():
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("placeholder", placeholder)
 
-    builder.add_conditional_edges(START, route_question, {
-        "tweets": "tweets_retrieve",
-        "media": "coindesk_retrieve",
-    })
-    builder.add_conditional_edges("placeholder", route_question, {
-        "tweets": "tweets_retrieve",
-        "media": "coindesk_retrieve",
-    })
+    builder.add_conditional_edges(
+        START,
+        route_question,
+        {
+            "tweets": "tweets_retrieve",
+            "media": "coindesk_retrieve",
+        },
+    )
+    builder.add_conditional_edges(
+        "placeholder",
+        route_question,
+        {
+            "tweets": "tweets_retrieve",
+            "media": "coindesk_retrieve",
+        },
+    )
     builder.add_edge("coindesk_retrieve", "grade_documents")
     builder.add_edge("tweets_retrieve", "grade_documents")
-    builder.add_conditional_edges("grade_documents", decide_to_generate, {
-        "rewrite_query": "rewrite_query",
-        "generate": "generate",
-    })
+    builder.add_conditional_edges(
+        "grade_documents",
+        decide_to_generate,
+        {
+            "rewrite_query": "rewrite_query",
+            "generate": "generate",
+        },
+    )
     builder.add_edge("rewrite_query", "placeholder")
     builder.add_conditional_edges(
         "generate", grade_answer, {"useful": END, "not useful": "rewrite_query"}
     )
 
     return builder
+
 
 builder = get_graph_builder()

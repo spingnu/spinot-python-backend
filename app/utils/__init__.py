@@ -12,7 +12,7 @@ kst = pytz.timezone("Asia/Seoul")
 
 
 def get_timestamp():
-    return datetime.now(kst).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(kst).isoformat()
 
 
 def get_response(status_code, body={}):

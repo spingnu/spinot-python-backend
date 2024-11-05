@@ -14,13 +14,19 @@ client = OpenAI(
     api_key=os.environ.get(Config.OPENAI_API_KEY),
 )
 
+ALLOWED_MODELS = ["gpt-4o", "o1-preview", "o1-mini", "gpt-4o-mini"]
+
 
 # Define a function to call the OpenAI API with retries
 @retry(
     stop=stop_after_attempt(5),  # Stop after 5 attempts
     wait=wait_exponential(min=1, max=60),  # Exponential backoff from 1 to 60 seconds
 )
-def generate_text(prompt):
+def generate_text(
+    prompt: str,
+    system_prompt: str = "You are a helpful assistant.",
+    model: str = "gpt-4o",
+):
     """
     Generates a completion from OpenAI API with retries for rate limits and network errors.
 
@@ -30,8 +36,14 @@ def generate_text(prompt):
     Returns:
     str: The response text from the API.
     """
+    # Check if the model is in the allowed list
+    if model not in ALLOWED_MODELS:
+        raise ValueError(
+            f"Model '{model}' is not allowed. Choose from: {ALLOWED_MODELS}"
+        )
+
     message = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt},
     ]
 

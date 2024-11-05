@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime
+
+from app.db.news import get_news_in_time_range
+from app.db.portfolio import filter_out_user_without_portfolio
+from app.db.portfolio import get_user_portfolio
+from app.db.report import update_report_for_user_on_date
+from app.db.tweet import get_user_tweets_in_time_range
+from app.db.user import get_all_user_ids
 from app.utils.llm_apis.openai_api import generate_text
+
 
 MARKET_OVERVIEW_TEMPLATE = """
 **Market Sentiment:** {{market_sentiment}}
@@ -123,111 +132,198 @@ FINANCIAL_ANALYST_TAKE_TEMPLATE = """
 
 SEPERATOR = "\n---\n"
 
-SAMPLE_NEWS = [
-    {
-        "title": "Tesla to Accept Bitcoin Payments",
-        "content": "Elon Musk announces that Tesla will now accept Bitcoin payments for its electric cars.",
-    },
-    {
-        "title": "Bitcoin Hits All-Time High",
-        "content": "Bitcoin reaches an all-time high of $60,000, driven by institutional interest.",
-    },
-]
+SYSTEM_PROMPT = """
+You are a professional financial analyst writing a concise, data-driven daily report for the user. The report should focus on key insights relevant to the user’s portfolio, recent market trends, significant news events, and notable social media highlights. Your writing should be fact-based, actionable, and organized in a clear and structured format. Ensure that the language is professional, concise, and easy to read.
+"""
 
-SAMPLE_TWEETS = [
-    {
-        "content": "Just bought some $AAPL shares. Feeling bullish about their upcoming product launch.",
-        "user": "JohnDoe",
-    },
-    {
-        "content": "Sold my $TSLA shares today. Expecting a dip in the market soon.",
-        "user": "JaneSmith",
-    },
-]
+USER_PROMPT = """
+Do not include any meta comments or instructions—only the report content.
 
-SAMPLE_ASSETS = [
-    {
-        "name": "Apple Inc.",
-    },
-    {
-        "name": "Tesla Inc.",
-    },
-]
+Important Guidelines:
+
+	•	Content Focus: Only include information that directly pertains to the specified section of the report. Avoid including unrelated topics or sections.
+	•	Structure and Clarity: Write in a structured, bullet-point format or short paragraphs for easy readability.
+	•	Objective Tone: Maintain an objective, analytical tone, and avoid adding personal opinions or speculative content.
+	•	Relevance: Ensure that each point is relevant to the user’s investment strategy or decision-making.
+    •	Reference: Include sources by its number and type (tweet or news) for all data points, news, and insights provided in the report.
+
+Only provide content that adheres to these instructions and fits the specified report template.
+"""
 
 
-def generate_report(user_id: str, date: str):
-    report = f"## Daily Report for {user_id} on {date}"
-    report += SEPERATOR
+def generate_report_for_every_user(date: datetime) -> dict:
+    all_user_ids = get_all_user_ids()
+    user_ids_with_portfolio = filter_out_user_without_portfolio(all_user_ids)
+
+    for user_id in user_ids_with_portfolio:
+        report = generate_report(user_id, date)
+        update_report_for_user_on_date(user_id, date, report)
+
+
+def generate_report(user_id: str, date: datetime) -> str:
+    """
+    Generate a daily report for a user based on the given date.
+
+    Args:
+    - user_id (str): The ID of the user for whom the report is generated.
+    - date (datetime): The date for which the report is generated.
+
+    Returns:
+    - str: Markdown-formatted daily report
+    """
+
+    tweets = get_user_tweets_in_time_range(user_id, date, 1)
+    tweet_contents = [tweet["content"] for tweet in tweets]
+    tweet_prompt = "\n".join(
+        [f"{i+1}. {tweet}" for i, tweet in enumerate(tweet_contents)]
+    )
+    tweet_prompt = "Here are some tweets from your network:\n" + tweet_prompt
+
+    news = get_news_in_time_range(date, 1)
+    news_contents = [f"{news['title']}: {news['description']}" for news in news]
+    news_prompt = "\n".join([f"{i+1}. {news}" for i, news in enumerate(news_contents)])
+    news_prompt = "Here are some news highlights for you:\n" + news_prompt
+
+    portfolio = get_user_portfolio(user_id)
+    portfolio_contents = [f"{asset['name']} ({asset['symbol']})" for asset in portfolio]
+    portfolio_prompt = "\n".join(
+        [f"{i+1}. {asset}" for i, asset in enumerate(portfolio_contents)]
+    )
+    portfolio_prompt = "Here are some assets in your portfolio:\n" + portfolio_prompt
+
+    report = SEPERATOR
     report += "\n### 🔍 Market Overview\n"
-    report += _generate_market_overview()
+    report += _generate_market_overview(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### 📈 Portfolio Highlights\n"
-    report += _generate_portfolio_highlights()
+    report += _generate_portfolio_highlights(
+        tweet_prompt, news_prompt, portfolio_prompt
+    )
     report += SEPERATOR
     report += "\n### 📰 News & Social Media Highlights\n"
-    report += _generate_news_highlights()
+    report += _generate_news_highlights(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### 📉 Forecast Summary\n"
-    report += _generate_forecast_summary()
+    report += _generate_forecast_summary(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### 💡 Analyst Insights\n"
-    report += _generate_analyst_insights()
+    report += _generate_analyst_insights(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### ⚠️ Risk Alert\n"
-    report += _generate_risk_alert()
+    report += _generate_risk_alert(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### 📆 Upcoming Events\n"
-    report += _generate_upcoming_events()
+    report += _generate_upcoming_events(tweet_prompt, news_prompt, portfolio_prompt)
     report += SEPERATOR
     report += "\n### 🤖 Financial Analyst's Take\n"
-    report += _generate_financial_analyst_take()
+    report += _generate_financial_analyst_take(
+        tweet_prompt, news_prompt, portfolio_prompt
+    )
 
     return report
 
 
-def _generate_market_overview():
-    prompt = f"""Fill the template below with the latest market overview information:
+def _generate_market_overview(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest market overview information:
     {MARKET_OVERVIEW_TEMPLATE}"""
-    return generate_text(prompt)
+    prompt += "\n"
+    prompt += USER_PROMPT
+    return generate_text(prompt, system_prompt=SYSTEM_PROMPT)
 
 
-def _generate_portfolio_highlights():
-    prompt = f"""Fill the template below with the latest portfolio highlights information:
+def _generate_portfolio_highlights(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest portfolio highlights information. For the price and change just fill any imaginery number:
     {PORTFOLIO_HIGHLIGHTS_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
     return generate_text(prompt)
 
 
-def _generate_news_highlights():
-    prompt = f"""Fill the template below with the latest news highlights information:
+def _generate_news_highlights(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest news highlights information:
     {NEWS_HIGHLIGHTS_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
     return generate_text(prompt)
 
 
-def _generate_forecast_summary():
-    prompt = f"""Fill the template below with the latest forecast summary information:
+def _generate_forecast_summary(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest forecast summary information:
     {FORECAST_SUMMARY_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
     return generate_text(prompt)
 
 
-def _generate_analyst_insights():
-    prompt = f"""Fill the template below with the latest analyst insights information:
+def _generate_analyst_insights(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest analyst insights information:
     {ANALYST_INSIGHTS_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
+
     return generate_text(prompt)
 
 
-def _generate_risk_alert():
-    prompt = f"""Fill the template below with the latest risk alert information:
+def _generate_risk_alert(tweet_prompt: str, news_prompt: str, portfolio_prompt: str):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest risk alert information:
     {RISK_ALERT_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
+
     return generate_text(prompt)
 
 
-def _generate_upcoming_events():
-    prompt = f"""Fill the template below with the latest upcoming events information:
+def _generate_upcoming_events(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest upcoming events information:
     {UPCOMING_EVENTS_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
+
     return generate_text(prompt)
 
 
-def _generate_financial_analyst_take():
-    prompt = f"""Fill the template below with the latest financial analyst take information:
+def _generate_financial_analyst_take(
+    tweet_prompt: str, news_prompt: str, portfolio_prompt: str
+):
+    prompt = tweet_prompt + news_prompt + portfolio_prompt
+    prompt += "\n"
+    prompt += f"""Fill the template below with the latest financial analyst take information:
     {FINANCIAL_ANALYST_TAKE_TEMPLATE}"""
+    prompt += "\n"
+    prompt += USER_PROMPT
+
     return generate_text(prompt)
+
+
+if __name__ == "__main__":
+    user_id = "b447cb9c-39f3-4e72-82bf-932dbf9204a5"
+    date = datetime.now()
+    # report = generate_report(user_id, date)
+    # print(report)
+    generate_report_for_every_user(date)
