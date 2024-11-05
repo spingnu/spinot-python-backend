@@ -24,6 +24,7 @@ def fetch_all_users_timeline_tweets(twitter_users, start_time):
         except Exception as e:
             logger.warn(f"access_token is expired (error={e})")
             new_access_token, new_refresh_token = reauthenticate(refresh_token)
+            print(access_token)
             timelines = fetch_twitter_timelines(
                 provider_account_id, new_access_token, start_time
             )

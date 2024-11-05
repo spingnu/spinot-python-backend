@@ -6,8 +6,12 @@ from app.db.news import get_news_in_time_range
 from app.db.portfolio import filter_out_user_without_portfolio
 from app.db.portfolio import get_user_portfolio
 from app.db.report import update_report_for_user_on_date
+from app.db.source import update_coindesk_db
 from app.db.tweet import get_user_tweets_in_time_range
 from app.db.user import get_all_user_ids
+from app.logger import logger
+from app.service.twitter_batch_service import batch_update_all_user_timelines
+from app.utils import get_response
 from app.utils.llm_apis.openai_api import generate_text
 
 
@@ -149,6 +153,30 @@ Important Guidelines:
 
 Only provide content that adheres to these instructions and fits the specified report template.
 """
+
+
+def crawl_data_generate_report():
+    try:
+        update_coindesk_db()
+        logger.info("Successfully updated coindesk news")
+    except Exception as e:
+        logger.error(f"Failed to update coindesk news: {e}")
+        return get_response(500, {"error": str(e)})
+
+    try:
+        batch_update_all_user_timelines(24)
+        logger.info("Successfully updated all user timelines")
+    except Exception as e:
+        logger.error(f"Failed to update all user timelines: {e}")
+        return get_response(500, {"error": str(e)})
+
+    date = datetime.now()
+    try:
+        generate_report_for_every_user(date)
+        logger.info("Successfully generated reports for all users")
+    except Exception as e:
+        logger.error(f"Failed to generate reports for all users: {e}")
+        return get_response(500, {"error": str(e)})
 
 
 def generate_report_for_every_user(date: datetime) -> dict:
