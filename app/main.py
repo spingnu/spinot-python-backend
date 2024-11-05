@@ -23,12 +23,15 @@ from app.agents.agent import builder
 async def lifespan(app: FastAPI):
     db_uri = Config.get_postgres_db_uri()
     logger.info(f"Connecting to Postgres: {db_uri}")
-    app.async_pool = AsyncConnectionPool(conninfo=db_uri)
-    app.checkpointer = AsyncPostgresSaver(app.async_pool)
-    app.graph = builder.compile(app.checkpointer)
-    await app.checkpointer.setup()
-    yield
-    await app.async_pool.close()
+    async with AsyncConnectionPool(conninfo=db_uri) as pool:
+        checkpointer = AsyncPostgresSaver(pool)
+        graph = builder.compile(checkpointer)
+        # await checkpointer.setup()
+        app.async_pool = pool
+        app.checkpointer = checkpointer
+        app.graph = graph
+        yield
+        await pool.close()
 
 
 app = FastAPI(
