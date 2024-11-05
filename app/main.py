@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     async with AsyncConnectionPool(conninfo=db_uri) as pool:
         checkpointer = AsyncPostgresSaver(pool)
         graph = builder.compile(checkpointer)
-        # await checkpointer.setup()
+        await checkpointer.setup()
         app.async_pool = pool
         app.checkpointer = checkpointer
         app.graph = graph
