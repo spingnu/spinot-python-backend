@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.utils.llm_apis.openai_api import generate_text
+
 MARKET_OVERVIEW_TEMPLATE = """
 **Market Sentiment:** {{market_sentiment}}
 **Current Trends:** {{key_market_trends}}
@@ -184,32 +186,48 @@ def generate_report(user_id: str, date: str):
 
 
 def _generate_market_overview():
-    return "market_overview"
+    prompt = f"""Fill the template below with the latest market overview information:
+    {MARKET_OVERVIEW_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_portfolio_highlights():
-    return "portfolio_highlights"
+    prompt = f"""Fill the template below with the latest portfolio highlights information:
+    {PORTFOLIO_HIGHLIGHTS_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_news_highlights():
-    return "news_highlights"
+    prompt = f"""Fill the template below with the latest news highlights information:
+    {NEWS_HIGHLIGHTS_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_forecast_summary():
-    return "forecast_summary"
+    prompt = f"""Fill the template below with the latest forecast summary information:
+    {FORECAST_SUMMARY_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_analyst_insights():
-    return "analyst_insights"
+    prompt = f"""Fill the template below with the latest analyst insights information:
+    {ANALYST_INSIGHTS_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_risk_alert():
-    return "risk_alert"
+    prompt = f"""Fill the template below with the latest risk alert information:
+    {RISK_ALERT_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_upcoming_events():
-    return "upcoming_events"
+    prompt = f"""Fill the template below with the latest upcoming events information:
+    {UPCOMING_EVENTS_TEMPLATE}"""
+    return generate_text(prompt)
 
 
 def _generate_financial_analyst_take():
-    return "financial_analyst_take"
+    prompt = f"""Fill the template below with the latest financial analyst take information:
+    {FINANCIAL_ANALYST_TAKE_TEMPLATE}"""
+    return generate_text(prompt)
