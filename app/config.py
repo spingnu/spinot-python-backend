@@ -20,8 +20,11 @@ class Config:
     POSTGRES_HOST = os.getenv("POSTGRES_HOST")
     POSTGRES_PORT = os.getenv("POSTGRES_PORT")
     POSTGRES_DB = os.getenv("POSTGRES_DB")
+    S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
     @classmethod
     def get_postgres_db_uri(cls):
-        return (f"postgresql://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}@"
-                f"{cls.POSTGRES_HOST}:{cls.POSTGRES_PORT}/{cls.POSTGRES_DB}")
+        return (
+            f"postgresql://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}@"
+            f"{cls.POSTGRES_HOST}:{cls.POSTGRES_PORT}/{cls.POSTGRES_DB}"
+        )
