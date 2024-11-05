@@ -1,11 +1,23 @@
-# import boto3
-# from app.config import Config
-# import requests
-# import hashlib
-# from werkzeug.utils import secure_filename
-# from app.logger import logger
-# S3_BUCKET_NAME = "bucket"  # Config.IMAGE_BUCKET_NAME
-# S3_CLIENT = boto3.client("s3")
+from __future__ import annotations
+
+import boto3
+import requests
+
+from app.config import Config
+
+S3_BUCKET_NAME = Config.S3_BUCKET_NAME
+S3_CLIENT = boto3.client("s3")
+
+
+def upload_asset_image_to_s3(image_url: str, asset_id: str):
+    image_response = requests.get(image_url)
+    image_data = image_response.content
+    s3_key = f"asset_images/{asset_id}.png"
+    S3_CLIENT.put_object(Body=image_data, Bucket=S3_BUCKET_NAME, Key=s3_key)
+    image_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{s3_key}"
+    return image_url
+
+
 # def upload_ai_generated_images_to_s3(response):
 #     image_urls = []
 #     image_ids = []
@@ -20,6 +32,7 @@
 #         image_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{s3_key}"
 #         image_urls.append(image_url)
 #     return image_ids, image_urls
+
 # def upload_image_to_s3(image, type="uploaded"):
 #     filename = secure_filename(image.filename)
 #     img_extension = filename.rsplit(".", 1)[1].lower()
@@ -37,6 +50,7 @@
 #     except Exception as e:
 #         logger.info(str(e))
 #     return image_id, image_url
+
 # def upload_temp_image_to_s3(image, type="tmp"):
 #     filename = secure_filename(image.filename)
 #     img_extension = filename.rsplit(".", 1)[1].lower()
@@ -51,6 +65,3 @@
 #         Body=image_data, Bucket=S3_BUCKET_NAME, Key=s3_key, ContentType=content_type
 #     )
 #     return image_url, s3_key
-# def delete_item_s3(s3_key, S3BUCKEt=S3_BUCKET_NAME):
-#     S3_CLIENT.delete_object(Bucket=S3BUCKEt, Key=s3_key)
-from __future__ import annotations

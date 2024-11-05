@@ -121,6 +121,37 @@ FINANCIAL_ANALYST_TAKE_TEMPLATE = """
 
 SEPERATOR = "\n---\n"
 
+SAMPLE_NEWS = [
+    {
+        "title": "Tesla to Accept Bitcoin Payments",
+        "content": "Elon Musk announces that Tesla will now accept Bitcoin payments for its electric cars.",
+    },
+    {
+        "title": "Bitcoin Hits All-Time High",
+        "content": "Bitcoin reaches an all-time high of $60,000, driven by institutional interest.",
+    },
+]
+
+SAMPLE_TWEETS = [
+    {
+        "content": "Just bought some $AAPL shares. Feeling bullish about their upcoming product launch.",
+        "user": "JohnDoe",
+    },
+    {
+        "content": "Sold my $TSLA shares today. Expecting a dip in the market soon.",
+        "user": "JaneSmith",
+    },
+]
+
+SAMPLE_ASSETS = [
+    {
+        "name": "Apple Inc.",
+    },
+    {
+        "name": "Tesla Inc.",
+    },
+]
+
 
 def generate_report(user_id: str, date: str):
     report = f"## Daily Report for {user_id} on {date}"

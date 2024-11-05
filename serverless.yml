@@ -7,14 +7,13 @@ provider:
   iam:
     role:
       statements:
-#        - Effect: Allow
-#          Action:
-#            - "s3:GetObject"
-#            - "s3:PutObject"
-#            - "s3:DeleteObject"
-#          Resource:
-#            - "arn:aws:s3:::pixie-images/*"
-#            - "arn:aws:s3:::pixie-images-us/*"
+       - Effect: Allow
+         Action:
+           - "s3:GetObject"
+           - "s3:PutObject"
+           - "s3:DeleteObject"
+         Resource:
+           - "arn:aws:s3:::spinot-backend-bucket/*"
         # - Effect: Allow
         #   Action:
         #     - "dynamodb:PutItem"
@@ -25,6 +24,12 @@ provider:
         #     - "dynamodb:BatchWriteItem"
         #   Resource:
         #     - "arn:aws:dynamodb:${self:custom.region}:971150201377:table/infty-user-table"
+resources:
+  Resources:
+    SpinotBackendBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: spinot-backend-bucket
 # resources:
 #   Resources:
 #     Connection2Chat:
@@ -89,7 +94,4 @@ functions:
       - http: 'DELETE /{proxy+}'
       - http: 'PATCH /{proxy+}'
       - http: 'OPTIONS /{proxy+}'
-      - http:
-          path: api/v1/source/coindesk
-          method: GET
     timeout: 30
