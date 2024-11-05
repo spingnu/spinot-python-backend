@@ -11,6 +11,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from app.config import Config
 from app.db.report import get_report_by_id
 from app.logger import logger
 from app.utils import get_response
@@ -47,7 +48,7 @@ async def chat_report(chat_request: ChatReportRequest):
     Explain like the client is five years old based on the facts you have written in the report."""
     report_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system),
+            ("assistant", system),
             ("human", "Report: {report}\nQuestion: {question}"),
         ]
     )
@@ -57,7 +58,7 @@ async def chat_report(chat_request: ChatReportRequest):
         logger.error("Failed: report not found.")
         return get_response(500, "report not found.")
 
-    model = ChatOpenAI(model="o1-preview", temperature=0)
+    model = ChatOpenAI(model="o1-preview", temperature=1, api_key=Config.OPENAI_API_KEY)
     bot = report_prompt | model | StrOutputParser()
     res = await bot.ainvoke({"question": message, "report": report})
 
