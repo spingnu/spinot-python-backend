@@ -189,6 +189,7 @@ def get_graph_builder():
             return "not useful"
 
     def placeholder(state):
+        """Returns current state to next node."""
         return state
 
     builder = StateGraph(State)
@@ -197,7 +198,7 @@ def get_graph_builder():
     builder.add_node("generate", generate)
     builder.add_node("grade_documents", grade_documents)
     builder.add_node("rewrite_query", rewrite_query)
-    builder.add_node(placeholder)
+    builder.add_node("passthrough", placeholder)
 
     builder.add_conditional_edges(placeholder, route_question, {
         "tweets": "tweets_retrieve",
@@ -213,7 +214,7 @@ def get_graph_builder():
         "rewrite_query": "rewrite_query",
         "generate": "generate",
     })
-    builder.add_edge("rewrite_query", "")
+    builder.add_edge("rewrite_query", "passthrough")
     builder.add_conditional_edges(
         "generate", grade_answer, {"useful": END, "not useful": "rewrite_query"}
     )
