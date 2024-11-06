@@ -16,7 +16,7 @@ async def health():
     return {"status": "ok"}
 
 
-@router.get("")
+@router.get("/")
 async def crawl_data_and_generate_report():
     crawl_data_generate_report()
 

@@ -24,7 +24,7 @@ async def health():
 @router.get("")
 async def get_report(user_id: str, date: str):
     date = datetime.fromisoformat(date)
-    report = generate_report(user_id, date)
+    report, reference = generate_report(user_id, date)
 
     data = {"report": report}
 

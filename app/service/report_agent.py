@@ -147,9 +147,10 @@ Important Guidelines:
 
 	•	Content Focus: Only include information that directly pertains to the specified section of the report. Avoid including unrelated topics or sections.
 	•	Structure and Clarity: Write in a structured, bullet-point format or short paragraphs for easy readability.
-	•	Objective Tone: Maintain an objective, analytical tone, and avoid adding personal opinions or speculative content.
 	•	Relevance: Ensure that each point is relevant to the user’s investment strategy or decision-making.
     •	Reference: Include sources by its number and type (tweet or news) for all data points, news, and insights provided in the report.
+                    Link of the reference should be #news1 or #tweet1 etc.
+    •	Conciseness: Keep the report concise and to the point, do not use general statements or filler content.
 
 Only provide content that adheres to these instructions and fits the specified report template.
 """
@@ -184,8 +185,8 @@ def generate_report_for_every_user(date: datetime) -> dict:
     user_ids_with_portfolio = filter_out_user_without_portfolio(all_user_ids)
 
     for user_id in user_ids_with_portfolio:
-        report = generate_report(user_id, date)
-        update_report_for_user_on_date(user_id, date, report)
+        report, reference = generate_report(user_id, date)
+        update_report_for_user_on_date(user_id, date, report, reference)
 
 
 def generate_report(user_id: str, date: datetime) -> str:
@@ -248,7 +249,12 @@ def generate_report(user_id: str, date: datetime) -> str:
         tweet_prompt, news_prompt, portfolio_prompt
     )
 
-    return report
+    reference = {
+        "news": news_contents,
+        "tweet": tweet_contents,
+    }
+
+    return report, reference
 
 
 def _generate_market_overview(

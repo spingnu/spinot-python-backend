@@ -5,7 +5,6 @@ import base64
 import requests
 
 from app.config import Config
-from app.logger import logger
 
 
 # retrieve user's access_token by refresh_token
@@ -32,5 +31,4 @@ def reauthenticate(refresh_token: str):
         refresh_token = tokens.get("refresh_token")
         return [access_token, refresh_token]
     else:
-        logger.warn(f"Fail to retrieve access_token")
-        return ["", ""]
+        raise Exception("Failed to reauthenticate")

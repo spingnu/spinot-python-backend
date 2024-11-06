@@ -6,17 +6,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi import Response
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from mangum import Mangum
 from psycopg_pool import AsyncConnectionPool
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+from app.agents.agent import builder
+from app.config import Config
 from app.logger import logger
 from app.routers import agent
 from app.routers import ai
+from app.routers import cron
 from app.routers import report
 from app.routers import source
-from app.config import Config
-from app.agents.agent import builder
 
 
 @asynccontextmanager
@@ -50,6 +51,7 @@ app.include_router(agent.router, prefix="/api/v1")
 app.include_router(source.router, prefix="/api/v1")
 app.include_router(ai.router, prefix="/api/v1")
 app.include_router(report.router, prefix="/api/v1")
+app.include_router(cron.router, prefix="/api/v1")
 
 
 @app.get(
