@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.service.report_agent import crawl_data_generate_report
+from app.service.report_agent.report_agent import crawl_data_generate_report
 
 router = APIRouter(
     prefix="/cron",

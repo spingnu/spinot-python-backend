@@ -10,6 +10,7 @@ from app.db.source import update_coindesk_db
 from app.db.tweet import get_user_tweets_in_time_range
 from app.db.user import get_all_user_ids
 from app.logger import logger
+from app.service.report_agent.utils import remove_meta_content
 from app.service.twitter_batch_service import batch_update_all_user_timelines
 from app.utils import get_response
 from app.utils.llm_apis.openai_api import generate_text
@@ -49,10 +50,10 @@ Stay informed about key news impacting your portfolio and the associated risks.
 
 {% for news in relevant_news %}
 #### {{news.title}}
-**Source:** {{news.source}}
-**Impact on Portfolio:** {{news.impact_on_portfolio}}
-**Risk Assessment:** {{news.risk_level}}
-**Summary:** {{news.summary}}
+* **Source:** {{news.source}}
+* **Impact on Portfolio:** {{news.impact_on_portfolio}}
+* **Risk Assessment:** {{news.risk_level}}
+* **Summary:** {{news.summary}}
 
 {% endfor %}
 
@@ -137,22 +138,19 @@ FINANCIAL_ANALYST_TAKE_TEMPLATE = """
 SEPERATOR = "\n---\n"
 
 SYSTEM_PROMPT = """
-You are a professional financial analyst writing a concise, data-driven daily report for the user. The report should focus on key insights relevant to the user’s portfolio, recent market trends, significant news events, and notable social media highlights. Your writing should be fact-based, actionable, and organized in a clear and structured format. Ensure that the language is professional, concise, and easy to read.
+You are a professional financial analyst writing a concise, data-driven daily report for the user.
+Based on the source provided you should fill the template to write a specific section of the report.
 """
 
 USER_PROMPT = """
-Do not include any meta comments or instructions—only the report content.
-
 Important Guidelines:
 
-	•	Content Focus: Only include information that directly pertains to the specified section of the report. Avoid including unrelated topics or sections.
-	•	Structure and Clarity: Write in a structured, bullet-point format or short paragraphs for easy readability.
-	•	Relevance: Ensure that each point is relevant to the user’s investment strategy or decision-making.
-    •	Reference: Include sources by its number and type (tweet or news) for all data points, news, and insights provided in the report.
-                    Link of the reference should be #news1 or #tweet1 etc.
-    •	Conciseness: Keep the report concise and to the point, do not use general statements or filler content.
+* Details: The contents should be focused on the if some information is bullish or bearish for user's portfolio.
+* Reference Style: For each insight or statement, cite the source directly in the in-page link format [news1](#news1) or [tweet2](#tweet2).
+* Conciseness: Keep the report sharp and impactful, focusing on essential insights without general or filler content.
+* Bold Predictions: Include bold, well-reasoned predictions with actionable insights, structured in multi-step reasoning to help the reader make informed decisions.
 
-Only provide content that adheres to these instructions and fits the specified report template.
+Only provide content that adheres to these instructions and fits the specified report template. Do not include any meta comments or instructions—only the report content.
 """
 
 
@@ -223,11 +221,11 @@ def generate_report(user_id: str, date: datetime) -> str:
     report = SEPERATOR
     report += "\n### 🔍 Market Overview\n"
     report += _generate_market_overview(tweet_prompt, news_prompt, portfolio_prompt)
-    report += SEPERATOR
-    report += "\n### 📈 Portfolio Highlights\n"
-    report += _generate_portfolio_highlights(
-        tweet_prompt, news_prompt, portfolio_prompt
-    )
+    # report += SEPERATOR
+    # report += "\n### 📈 Portfolio Highlights\n"
+    # report += _generate_portfolio_highlights(
+    #     tweet_prompt, news_prompt, portfolio_prompt
+    # )
     report += SEPERATOR
     report += "\n### 📰 News & Social Media Highlights\n"
     report += _generate_news_highlights(tweet_prompt, news_prompt, portfolio_prompt)
@@ -266,7 +264,10 @@ def _generate_market_overview(
     {MARKET_OVERVIEW_TEMPLATE}"""
     prompt += "\n"
     prompt += USER_PROMPT
-    return generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_portfolio_highlights(
@@ -278,7 +279,10 @@ def _generate_portfolio_highlights(
     {PORTFOLIO_HIGHLIGHTS_TEMPLATE}"""
     prompt += "\n"
     prompt += USER_PROMPT
-    return generate_text(prompt)
+
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_news_highlights(
@@ -290,7 +294,10 @@ def _generate_news_highlights(
     {NEWS_HIGHLIGHTS_TEMPLATE}"""
     prompt += "\n"
     prompt += USER_PROMPT
-    return generate_text(prompt)
+
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_forecast_summary(
@@ -302,7 +309,10 @@ def _generate_forecast_summary(
     {FORECAST_SUMMARY_TEMPLATE}"""
     prompt += "\n"
     prompt += USER_PROMPT
-    return generate_text(prompt)
+
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_analyst_insights(
@@ -315,7 +325,9 @@ def _generate_analyst_insights(
     prompt += "\n"
     prompt += USER_PROMPT
 
-    return generate_text(prompt)
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_risk_alert(tweet_prompt: str, news_prompt: str, portfolio_prompt: str):
@@ -326,7 +338,9 @@ def _generate_risk_alert(tweet_prompt: str, news_prompt: str, portfolio_prompt: 
     prompt += "\n"
     prompt += USER_PROMPT
 
-    return generate_text(prompt)
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_upcoming_events(
@@ -339,7 +353,9 @@ def _generate_upcoming_events(
     prompt += "\n"
     prompt += USER_PROMPT
 
-    return generate_text(prompt)
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 def _generate_financial_analyst_take(
@@ -352,7 +368,9 @@ def _generate_financial_analyst_take(
     prompt += "\n"
     prompt += USER_PROMPT
 
-    return generate_text(prompt)
+    report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
+
+    return remove_meta_content(report)
 
 
 if __name__ == "__main__":

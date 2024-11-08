@@ -45,7 +45,12 @@ async def chat_report(chat_request: ChatReportRequest):
 
     system = """You are a seasoned financial analyst who compiled a report for client.
     You will be asked questions about the report you have written.
-    Explain like the client is five years old based on the facts you have written in the report."""
+    Explain like the client is five years old based on the facts you have written in the report.
+
+    Guidelines:
+        * Ask follow-up questions to clarify the context if the question is unclear.
+        * Your response should be under three sentences.
+    """
     report_prompt = ChatPromptTemplate.from_messages(
         [
             ("assistant", system),

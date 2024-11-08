@@ -4,8 +4,8 @@ from datetime import datetime
 
 from fastapi import APIRouter
 
-from app.service.report_agent import generate_report
-from app.service.report_agent import generate_report_for_every_user
+from app.service.report_agent.report_agent import generate_report
+from app.service.report_agent.report_agent import generate_report_for_every_user
 from app.utils import get_response
 
 
