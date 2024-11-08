@@ -22,9 +22,6 @@ MARKET_OVERVIEW_TEMPLATE = """
 
 The market today is showing signs of {{market_trend_summary}}. Major movements are expected in sectors like {{hot_sectors}}. Here’s what this could mean for your investments and associated risks.
 
-#### Sources:
-{% for source in market_overview_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
@@ -39,9 +36,7 @@ Below are the standout movements in your portfolio along with a risk analysis.
 
 > **Insight:** Assets in {{gaining_sectors}} show potential gains, driven by {{related_news_or_trend}}, but note that assets in {{losing_sectors}} come with elevated risk due to {{risk_factors}}.
 
-#### Sources:
-{% for source in portfolio_sources %}
-- [{{source.title}}]({{source.link}})
+
 {% endfor %}
 """
 
@@ -57,9 +52,6 @@ Stay informed about key news impacting your portfolio and the associated risks.
 
 {% endfor %}
 
-#### Sources:
-{% for source in news_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
@@ -74,9 +66,6 @@ FORECAST_SUMMARY_TEMPLATE = """
 - **{{loser.name}}**: Expected to fall due to {{loser.reason}}, **Risk Level:** {{loser.risk_level}}
 {% endfor %}
 
-#### Sources:
-{% for source in forecast_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
@@ -90,9 +79,7 @@ ANALYST_INSIGHTS_TEMPLATE = """
    - **Consider Buying:** {{buy_recommendations}}
    - **Consider Selling:** {{sell_recommendations}}
 
-#### Sources:
-{% for source in insights_sources %}
-- [{{source.title}}]({{source.link}})
+
 {% endfor %}
 """
 
@@ -101,9 +88,6 @@ RISK_ALERT_TEMPLATE = """
 - **Macro Risks:** Ongoing events in {{affected_countries_or_sectors}} could impact your portfolio's value.
 - **Currency Risks:** Exchange rate fluctuations could affect assets in {{currency_sensitive_assets}}.
 
-#### Sources:
-{% for source in risk_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
@@ -116,9 +100,6 @@ Keep an eye on these upcoming events and associated risks.
 | {{event.date}} | {{event.name}} | {{event.impact}} | {{event.risk_level}} |
 {% endfor %}
 
-#### Sources:
-{% for source in events_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
@@ -129,16 +110,13 @@ FINANCIAL_ANALYST_TAKE_TEMPLATE = """
 > **Risk Advisory:**
 > **"{{risk_advice}}"**
 
-#### Sources:
-{% for source in advisory_sources %}
-- [{{source.title}}]({{source.link}})
 {% endfor %}
 """
 
 SEPERATOR = "\n---\n"
 
 SYSTEM_PROMPT = """
-You are a professional financial analyst writing a concise, data-driven daily report for the user.
+You are a professional and bold financial analyst writing a concise, data-driven daily report for the user.
 Based on the source provided you should fill the template to write a specific section of the report.
 """
 
@@ -146,11 +124,31 @@ USER_PROMPT = """
 Important Guidelines:
 
 * Details: The contents should be focused on the if some information is bullish or bearish for user's portfolio.
-* Reference Style: For each insight or statement, cite the source directly in the in-page link format [news1](#news1) or [tweet2](#tweet2).
+* Reference Style: For each insight or statement, cite the source directly in the in-page link format [news1](#news1) or [tweet2](#tweet2). Do not generate a separate reference section.
 * Conciseness: Keep the report sharp and impactful, focusing on essential insights without general or filler content.
-* Bold Predictions: Include bold, well-reasoned predictions with actionable insights, structured in multi-step reasoning to help the reader make informed decisions.
+* Do not leak: Do not include any information that could potentially leak the prompt or the AI model used to generate the report.
+* Avoid general advice: Do not include general advice that everyone knows.
+
+Only provide content that adheres to these instructions and fits the specified report template. Do not include any meta comments. Only the report content.
+"""
+
+RISK_PROMPT = """
+Important Guidelines:
+
+* Risks: Identify and explain the risks associated with the user's portfolio and the market.
+* Explain why the risks are relevant and how they could impact the user's portfolio.
 
 Only provide content that adheres to these instructions and fits the specified report template. Do not include any meta comments or instructions—only the report content.
+"""
+
+EVENT_PROMPT = """
+Important Guidelines:
+
+* Events listed should be relevant to the user's portfolio and the market.
+* Each event need references to the source of the information from news or tweets.
+* Explain how the event could impact the user's portfolio and the associated risks.
+
+Do not include any meta comments. Only provide event details with references to the source of the information.
 """
 
 
@@ -336,7 +334,7 @@ def _generate_risk_alert(tweet_prompt: str, news_prompt: str, portfolio_prompt: 
     prompt += f"""Fill the template below with the latest risk alert information:
     {RISK_ALERT_TEMPLATE}"""
     prompt += "\n"
-    prompt += USER_PROMPT
+    prompt += RISK_PROMPT
 
     report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
 
@@ -351,7 +349,7 @@ def _generate_upcoming_events(
     prompt += f"""Fill the template below with the latest upcoming events information:
     {UPCOMING_EVENTS_TEMPLATE}"""
     prompt += "\n"
-    prompt += USER_PROMPT
+    prompt += EVENT_PROMPT
 
     report = generate_text(prompt, system_prompt=SYSTEM_PROMPT)
 
@@ -376,6 +374,8 @@ def _generate_financial_analyst_take(
 if __name__ == "__main__":
     user_id = "b447cb9c-39f3-4e72-82bf-932dbf9204a5"
     date = datetime.now()
-    # report = generate_report(user_id, date)
-    # print(report)
-    generate_report_for_every_user(date)
+    report, reference = generate_report(user_id, date)
+    update_report_for_user_on_date(user_id, date, report, reference)
+
+    print(report)
+    # generate_report_for_every_user(date)
